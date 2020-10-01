@@ -1,19 +1,16 @@
 /*
  ** Analysis Example
- ** Device Offline Alert
+ ** Creating devices using dashboard
  **
- ** This analysis must run by Time Interval. It checks if devices with given Tags
- ** had communication in the past minutes. If not, it sends an email or sms alert.
+ ** Using an Input Widget in the dashboard, you will be able to create devices in your account.
+ ** You can get the dashboard template to use here: http://admin.tago.io/template/5f514218d4555600278023c4
+ ** Use a dummy HTTPs device with the dashboard.
  **
  ** Environment Variables
  ** In order to use this analysis, you must setup the Environment Variable table.
- **
- ** account_token: Your account token
- ** checkin_time: Minutes between the last input of the device before sending the notification.
- ** tag_key: Device tag Key to filter the devices.
- ** tag_value: Device tag Value to filter the devices.
- ** email_list: Email list comma separated.
- ** sms_list: Phone number list comma separated. The phone number must include the country code
+ **   account_token: Your account token. Check bellow how to get this.
+ **   connector_id: Default Connector ID for the device (optional)
+ **   network_id: Default Network Server ID for the device (optional)
  **
  ** Steps to generate an account_token:
  ** 1 - Enter the following link: https://admin.tago.io/account/
@@ -22,95 +19,58 @@
  ** 4 - Generate a new Token with Expires Never.
  ** 5 - Press the Copy Button and place at the Environment Variables tab of this analysis.
  */
+const { Analysis, Account, Utils, Device } = require('@tago-io/sdk');
 
-const { Analysis, Account, Services, Utils } = require("@tago-io/sdk");
-const moment = require("moment-timezone");
+async function init(context, scope) {
+  if (!scope[0]) return context.log('This analysis must be triggered by a widget.');
 
-async function myAnalysis(context) {
-  // Transform all Environment Variable to JSON.
+  context.log('Creating your device');
+  // Get the environment variables.
   const env = Utils.envToJson(context.environment);
+  if (!env.account_token) return context.log('Missing "account_token" environment variable');
+  else if (env.account_token.length !== 36) return context.log('Invalid "account_token" in the environment variable');
 
-  if (!env.account_token) {
-    return context.log("You must setup an account_token in the Environment Variables.");
-  } else if (!env.checkin_time) {
-    return context.log("You must setup a checkin_time in the Environment Variables.");
-  } else if (!env.tag_key) {
-    return context.log("You must setup a tag_key in the Environment Variables.");
-  } else if (!env.tag_value) {
-    return context.log("You must setup a tag_value in the Environment Variables.");
-  } else if (!env.email_list && !env.sms_list) {
-    return context.log("You must setup an email_list or a sms_list in the Environment Variables.");
-  }
-
-  const checkin_time = Number(env.checkin_time);
-  if (Number.isNaN(checkin_time)) return context.log("The checkin_time must be a number.");
-
+  // Instance the Account class
   const account = new Account({ token: env.account_token });
 
-  // You can remove the comments on line 51 and 57 to use the Tag Filter.
-  //const filter = { tags: [{ key: env.tag_key, value: env.tag_value }] };
+  // Get the device used for the dashboard.
+  const dashboard_dev_token = await Utils.getTokenByName(account, scope[0].origin);
+  const dashboard_device = new Device({ token: dashboard_dev_token });
 
-  const devices = await account.devices.list({
-    page: 1,
-    amount: 1000,
-    fields: ["id", "name", "last_input"],
-    // filter,
+  // Get the variables form_payload and form_port sent by the widget/dashboard.
+  const connector_id = scope.find(x => x.variable === 'connector_id') || { value: env.payload, origin: env.connector_id };
+  const network_id = scope.find(x => x.variable === 'network_id') || { value: env.payload, origin: env.network_id };
+  const device_name = scope.find(x => x.variable === 'device_name');
+  const device_serial = scope.find(x => x.variable === 'device_serial');
+
+  if (!connector_id || !connector_id.value) return context.log('Missing "connector_id" in the data scope.');
+  else if (!network_id || !network_id.value) return context.log('Missing "network_id" in the data scope.');
+
+  const result = await account.devices.create({
+    name: device_name.value || 'Any name',
+    serie_number: device_serial.value,
+    tags: [
+      // You can add custom tags here.
+      { key: 'tag_key', value: 'tag_value' },
+    ],
+    connector: connector_id.value,
+    network: network_id.value,
+    active: true,
+  }).catch((error) => {
+    dashboard_device.sendData({ variable: 'validation', value: `Error when creating the device ${error}`, metadata: { color: 'red' } });
+    throw error;
   });
 
-  if (!devices.length) {
-    return context.log(`No device found with given tags. Key: ${env.tag_key}, Value: ${env.tag_value} `);
-  }
+  // To add Configuration Parameters to the device:
+  account.devices.paramSet(result.device_id, { key: 'param_key', value: '10', sent: false });
 
-  context.log("Checking devices: ", devices.map((x) => x.name).join(", "));
+  // To add any data to the device that was just created:
+  const device = new Device({ token: result.token });
+  device.sendData({ variable: 'temperature', value: 17 });
 
-  const now = moment();
-  const alert_devices = [];
-  for (const device of devices) {
-    const last_input = moment(new Date(device.last_input));
-
-    // Check the difference in minutes.
-    const diff = now.diff(last_input, "minute");
-    if (diff > checkin_time) {
-      alert_devices.push(device.name);
-    }
-  }
-
-  if (!alert_devices.length) {
-    return context.log("All devices are okay.");
-  }
-
-  context.log("Sending notifications");
-  const emailService = new Services({ token: context.token }).email;
-  const smsService = new Services({ token: context.token }).sms;
-
-  let message = `Hi!\nYou're receiving this alert because the following devices didn't send data in the last ${checkin_time} minutes.\n\nDevices:`;
-  message += alert_devices.join("\n");
-
-  if (env.email_list) {
-    // Remove space in the string
-    const emails = env.email_list.replace(/ /g, "");
-
-    await emailService.send({
-      to: emails,
-      subject: "Device Offline Alert",
-      message,
-    });
-  }
-
-  if (env.sms_list) {
-    // Remove space in the string and convert to an Array.
-    const smsNumbers = env.sms_list.replace(/ /g, "").split(",");
-
-    for (const phone of smsNumbers) {
-      await smsService.send({
-        to: phone,
-        message,
-      });
-    }
-  }
+  // Send feedback to the dashboard:
+  dashboard_device.sendData({ variable: 'validation', value: 'Device succesfully created!', metadata: { color: 'green' } });
+  context.log(`Device succesfully created. ID: ${result.device_id}`);
 }
 
-module.exports = new Analysis(myAnalysis);
-
-// To run analysis on your machine (external)
-// module.exports = new Analysis(myAnalysis, { token: "YOUR-TOKEN" });
+module.exports = new Analysis(init);
