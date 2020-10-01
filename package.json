@@ -1,5 +1,5 @@
 {
-  "name": "analysis-example-device-offline",
+  "name": "analysis-example-create-device",
   "version": "1.0.0",
   "main": "analysis.js",
   "repository": "tago-io/analysis-example-deviceoffline",
