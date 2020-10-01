@@ -3,7 +3,7 @@
  ** Creating devices using dashboard
  **
  ** Using an Input Widget in the dashboard, you will be able to create devices in your account.
- ** You can get the dashboard template to use here: http://admin.tago.io/template/5f514218d4555600278023c4
+ ** You can get the dashboard template to use here: http://admin.tago.io/template/5d51ff8c171477001b230b92
  ** Use a dummy HTTPs device with the dashboard.
  **
  ** Environment Variables
