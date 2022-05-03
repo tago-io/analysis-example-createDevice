@@ -35,7 +35,7 @@ async function startAnalysis(context, scope) {
 
   // Get the token of the settings device used in the dashboard, then instance the device class.
   // We will use this to send the Validation (feedback) to the dashboard.
-  const dashboard_dev_token = await Utils.getTokenByName(account, scope[0].origin);
+  const dashboard_dev_token = await Utils.getTokenByName(account, scope[0].device);
   const dashboard_device = new Device({ token: dashboard_dev_token });
 
   // Get the variables sent by the widget/dashboard.
@@ -64,6 +64,7 @@ async function startAnalysis(context, scope) {
     connector: connector_id.value,
     network: network_id.value,
     active: true,
+    type: "immutable"
   }).catch((error) => {
     // Send the validation to the device.
     // That way we create an error in the dashboard for feedback.
