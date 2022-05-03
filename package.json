@@ -6,6 +6,6 @@
   "author": "Tago LLC",
   "license": "MIT",
   "dependencies": {
-    "@tago-io/sdk": "^10.0.5"
+    "@tago-io/sdk": "10.7.6"
   }
 }
