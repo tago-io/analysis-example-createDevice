@@ -56,7 +56,11 @@ async function startAnalysis(context, scope) {
     .catch((error) => {
       // Send the validation to the device.
       // That way we create an error in the dashboard for feedback.
-      Resources.devices.sendDeviceData(scope[0].device, { variable: "validation", value: `Error when creating the device ${error}`, metadata: { color: "red" } });
+      Resources.devices.sendDeviceData(scope[0].device, {
+        variable: "validation",
+        value: `Error when creating the device ${error}`,
+        metadata: { color: "red" },
+      });
       throw error;
     });
 
