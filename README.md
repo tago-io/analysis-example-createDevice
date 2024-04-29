@@ -5,17 +5,19 @@ You can get the dashboard template to use here: https://admin.tago.io/template/6
 
 Use a dummy HTTPs device with the dashboard.
 
-Environment Variables
-In order to use this analysis, you must setup the Environment Variable table.
-  account_token: Your account token. Check bellow how to get this.
-  
-Steps to generate an account_token:
+## How to use this analysis internally at TagoIO servers
 
-1. Enter the following link: https://admin.tago.io/account/
-2. Select your Profile.
-3. Enter Tokens tab.
-4. Generate a new Token with Expires Never.
-5. Press the Copy Button and place at the Environment Variables tab of this analysis.
+In order to use this analysis, you must to add a new policy in your account.<br>
+
+Steps to add a new policy:
+
+   1 - Click the button "Add Policy" at this url: https://admin.tago.io/am;
+
+   2 - In the Target selector, with the field set as "ID", choose your Analysis in the list;
+
+   3 - Click the "Click to add a new permission" element and select "Device" with the rule "Access" with the field as "Any";
+
+   4 - To save your new Policy, click the save button in the bottom right corner;<br>
 
 # How to run this analysis
 You can just upload the `analysis.js` file.

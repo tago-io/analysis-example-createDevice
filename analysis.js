@@ -1,42 +1,27 @@
 /*
- ** Analysis Example
- ** Creating devices using dashboard
- **
- ** Using an Input Widget in the dashboard, you will be able to create devices in your account.
- ** You can get the dashboard template to use here: https://admin.tago.io/template/6143555a314cef001871ec78
- ** Use a dummy HTTPs device with the dashboard.
- **
- ** Environment Variables
- ** In order to use this analysis, you must setup the Environment Variable table.
- **   account_token: Your account token. Check bellow how to get this.
- **
- ** Steps to generate an account_token:
- ** 1 - Enter the following link: https://admin.tago.io/account/
- ** 2 - Select your Profile.
- ** 3 - Enter Tokens tab.
- ** 4 - Generate a new Token with Expires Never.
- ** 5 - Press the Copy Button and place at the Environment Variables tab of this analysis.
+ * Example: Creating Devices via Dashboard
+ * This example demonstrates how to create devices in your account using an Input Widget on the dashboard.
+ *
+ * Dashboard Template:
+ * You can access the dashboard template needed for this operation here: https://admin.tago.io/template/6143555a314cef001871ec78
+ * It's recommended to use a dummy HTTPS device alongside the dashboard for testing purposes.
+ *
+ * Usage Instructions:
+ * For the analysis to function correctly, you must add a new policy to your account by following these steps:
+ *  1. Navigate to https://admin.tago.io/am and click on the "Add Policy" button.
+ *  2. In the Target selector, ensure the field is set to "ID", then select your Analysis from the list.
+ *  3. Click on the "Click to add a new permission" option, choose "Device" as the type, and set the rule to "Access" with the scope as "Any".
+ *  4. Finalize by clicking the save button located in the bottom right corner to apply your new Policy.
  */
-const { Analysis, Account, Utils, Device } = require("@tago-io/sdk");
+
+const { Analysis, Resources } = require("@tago-io/sdk");
 
 async function startAnalysis(context, scope) {
   if (!scope[0]) {
-    return context.log("The analysis must be triggered by a widget.");
+    return console.log("The analysis must be triggered by a widget.");
   }
 
-  context.log("Creating your device");
-  // Get the environment variables.
-  const env = Utils.envToJson(context.environment);
-  if (!env.account_token) return context.log('Missing "account_token" environment variable');
-  else if (env.account_token.length !== 36) return context.log('Invalid "account_token" in the environment variable');
-
-  // Instance the Account class
-  const account = new Account({ token: env.account_token });
-
-  // Get the token of the settings device used in the dashboard, then instance the device class.
-  // We will use this to send the Validation (feedback) to the dashboard.
-  const dashboard_dev_token = await Utils.getTokenByName(account, scope[0].device);
-  const dashboard_device = new Device({ token: dashboard_dev_token });
+  console.log("Creating your device");
 
   // Get the variables sent by the widget/dashboard.
   const network_id = scope.find((x) => x.variable === "device_network");
@@ -45,14 +30,19 @@ async function startAnalysis(context, scope) {
   const device_eui = scope.find((x) => x.variable === "device_eui");
 
   if (!connector_id || !connector_id.value) {
-    return context.log('Missing "device_connector" in the data scope.');
+    return console.log('Missing "device_connector" in the data scope.');
   } else if (!network_id || !network_id.value) {
-    return context.log('Missing "device_network" in the data scope.');
+    return console.log('Missing "device_network" in the data scope.');
   } else if (!device_eui || !device_eui.value) {
-    return context.log('Missing "device_eui" in the data scope.');
+    return console.log('Missing "device_eui" in the data scope.');
   }
 
-  const result = await account.devices
+  const deviceID = scope[0]?.device;
+  if (!deviceID) {
+    return console.log('Device ID not found in the data scope');
+  }
+
+  const result = await Resources.devices
     .create({
       name: device_name.value,
       // Serie number is the parameter for device eui, sigfox id, etc..
@@ -72,20 +62,20 @@ async function startAnalysis(context, scope) {
     .catch((error) => {
       // Send the validation to the device.
       // That way we create an error in the dashboard for feedback.
-      dashboard_device.sendData({ variable: "validation", value: `Error when creating the device ${error}`, metadata: { color: "red" } });
+      Resources.devices.sendDeviceData(deviceID, {
+        variable: "validation",
+        value: `Error when creating the device ${error}`,
+        metadata: { color: "red" },
+      });
       throw error;
     });
 
   // To add Configuration Parameters to the device:
-  account.devices.paramSet(result.device_id, { key: "param_key", value: "10", sent: false });
-
-  // To add any data to the device that was just created:
-  // const device = new Device({ token: result.token });
-  // device.sendData({ variable: 'temperature', value: 17 });
+  await Resources.devices.paramSet(result.device_id, { key: "param_key", value: "10", sent: false });
 
   // Send feedback to the dashboard:
-  dashboard_device.sendData({ variable: "validation", value: "Device succesfully created!", metadata: { type: "success" } });
-  context.log(`Device succesfully created. ID: ${result.device_id}`);
+  await Resources.devices.sendDeviceData(deviceID, { variable: "validation", value: "Device succesfully created!", metadata: { type: "success" } });
+  console.log(`Device succesfully created. ID: ${result.device_id}`);
 }
 
 module.exports = new Analysis(startAnalysis);
