@@ -29,11 +29,16 @@ async function startAnalysis(context, scope) {
   const device_eui = scope.find((x) => x.variable === "device_eui");
 
   if (!connector_id || !connector_id.value) {
-    return context.log('Missing "device_connector" in the data scope.');
+    return console.log('Missing "device_connector" in the data scope.');
   } else if (!network_id || !network_id.value) {
-    return context.log('Missing "device_network" in the data scope.');
+    return console.log('Missing "device_network" in the data scope.');
   } else if (!device_eui || !device_eui.value) {
-    return context.log('Missing "device_eui" in the data scope.');
+    return console.log('Missing "device_eui" in the data scope.');
+  }
+
+  const deviceID = scope[0]?.device;
+  if (!deviceID) {
+    return console.log('Device ID not found in the data scope');
   }
 
   const result = await Resources.devices
@@ -56,7 +61,7 @@ async function startAnalysis(context, scope) {
     .catch((error) => {
       // Send the validation to the device.
       // That way we create an error in the dashboard for feedback.
-      Resources.devices.sendDeviceData(scope[0].device, {
+      Resources.devices.sendDeviceData(deviceID, {
         variable: "validation",
         value: `Error when creating the device ${error}`,
         metadata: { color: "red" },
@@ -65,11 +70,11 @@ async function startAnalysis(context, scope) {
     });
 
   // To add Configuration Parameters to the device:
-  Resources.devices.paramSet(result.device_id, { key: "param_key", value: "10", sent: false });
+  await Resources.devices.paramSet(result.device_id, { key: "param_key", value: "10", sent: false });
 
   // Send feedback to the dashboard:
-  Resources.devices.sendDeviceData(scope[0].device, { variable: "validation", value: "Device succesfully created!", metadata: { type: "success" } });
-  context.log(`Device succesfully created. ID: ${result.device_id}`);
+  await Resources.devices.sendDeviceData(deviceID, { variable: "validation", value: "Device succesfully created!", metadata: { type: "success" } });
+  console.log(`Device succesfully created. ID: ${result.device_id}`);
 }
 
 module.exports = new Analysis(startAnalysis);
