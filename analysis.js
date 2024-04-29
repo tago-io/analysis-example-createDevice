@@ -1,26 +1,27 @@
 /*
- ** Analysis Example
- ** Creating devices using dashboard
- **
- ** Using an Input Widget in the dashboard, you will be able to create devices in your account.
- ** You can get the dashboard template to use here: https://admin.tago.io/template/6143555a314cef001871ec78
- ** Use a dummy HTTPs device with the dashboard.
- **
- ** How to use:
- ** To analysis works, you need to add a new policy in your account. Steps to add a new policy:
- **  1 - Click the button "Add Policy" at this url: https://admin.tago.io/am;
- **  2 - In the Target selector, with the field set as "ID", choose your Analysis in the list;
- **  3 - Click the "Click to add a new permission" element and select "Device" with the rule "Access" with the field as "Any";
- **  4 - To save your new Policy, click the save button in the bottom right corner;
+ * Example: Creating Devices via Dashboard
+ * This example demonstrates how to create devices in your account using an Input Widget on the dashboard.
+ *
+ * Dashboard Template:
+ * You can access the dashboard template needed for this operation here: https://admin.tago.io/template/6143555a314cef001871ec78
+ * It's recommended to use a dummy HTTPS device alongside the dashboard for testing purposes.
+ *
+ * Usage Instructions:
+ * For the analysis to function correctly, you must add a new policy to your account by following these steps:
+ *  1. Navigate to https://admin.tago.io/am and click on the "Add Policy" button.
+ *  2. In the Target selector, ensure the field is set to "ID", then select your Analysis from the list.
+ *  3. Click on the "Click to add a new permission" option, choose "Device" as the type, and set the rule to "Access" with the scope as "Any".
+ *  4. Finalize by clicking the save button located in the bottom right corner to apply your new Policy.
  */
+
 const { Analysis, Resources } = require("@tago-io/sdk");
 
 async function startAnalysis(context, scope) {
   if (!scope[0]) {
-    return context.log("The analysis must be triggered by a widget.");
+    return console.log("The analysis must be triggered by a widget.");
   }
 
-  context.log("Creating your device");
+  console.log("Creating your device");
 
   // Get the variables sent by the widget/dashboard.
   const network_id = scope.find((x) => x.variable === "device_network");
