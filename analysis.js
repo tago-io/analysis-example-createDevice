@@ -78,4 +78,4 @@ async function startAnalysis(context, scope) {
   console.log(`Device succesfully created. ID: ${result.device_id}`);
 }
 
-module.exports = new Analysis(startAnalysis);
+Analysis.use(startAnalysis);
