@@ -1,28 +1,24 @@
-# Create devices using dashboard
-Using an Input Widget in the dashboard, you will be able to create devices in your account.
+# Device Creation via Dashboard
+Leverage an Input Widget on the dashboard to facilitate the creation of devices within your account.
 
-You can get the dashboard template to use here: https://admin.tago.io/template/6143555a314cef001871ec78
+Access the required dashboard template here: [Dashboard Template](https://admin.tago.io/template/6143555a314cef001871ec78).
 
-Use a dummy HTTPs device with the dashboard.
+It's recommended to use a [Database](https://admin.tago.io/connectors/62336c32ab6e0d0012e06c04/62333bd36977fc001a2990c8) connector for the device alongside the dashboard.
 
-## How to use this analysis internally at TagoIO servers
+## Implementing This Analysis on TagoIO Servers
 
-In order to use this analysis, you must to add a new policy in your account.<br>
+To utilize this analysis within TagoIO, you'll need to incorporate a new policy to your account.
 
-Steps to add a new policy:
+### Steps to Incorporate a New Policy:
 
-   1 - Click the button "Add Policy" at this url: https://admin.tago.io/am;
+1. Navigate to [Add Policy](https://admin.tago.io/am) and click on the "Add Policy" button.
+2. In the Target selection area, ensure the field is set to "ID", then select your Analysis from the dropdown list.
+3. Click on the "Click to add a new permission" option, choose "Device" as the type, and set the rule to "Access" with the scope as "Any".
+4. Finalize by clicking the save button located at the bottom right corner to store your new policy.
 
-   2 - In the Target selector, with the field set as "ID", choose your Analysis in the list;
+# Executing the Analysis
 
-   3 - Click the "Click to add a new permission" element and select "Device" with the rule "Access" with the field as "Any";
+To deploy the analysis, you have two options:
 
-   4 - To save your new Policy, click the save button in the bottom right corner;<br>
-
-# How to run this analysis
-You can just upload the `analysis.js` file.
-
-or
-
-You can run locally, you should have last node version and install all dependencies running `npm install` on your terminal in this project folder,
-after that, you can run the project just calling analysis, `node analysis.js`;
+- Directly upload the `analysis.js` file.
+- For local execution, ensure you have the latest version of Node.js installed. Install all necessary dependencies by running `npm install` in your project directory via the terminal. Subsequently, initiate the analysis using `node analysis.js`.
